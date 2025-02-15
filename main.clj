@@ -1,4 +1,6 @@
-(ns main)
+(ns main
+  (:require [utils :as utils])
+  (:require [minimax :as minimax]))
 
 (println "Wellcome to Tic Tak Toe game")
 
@@ -10,15 +12,11 @@
         (every? #(= % pc) (map-indexed #(get %2 (- 2 %1)) board)) true
         :else false))
 
-(defn empty-place-exists
-  [board]
-  (some (fn [row] (some #(Character/isDigit %) row)) board))
-
 (defn get-inp
   [board]
   (println "Enter one of the available places number: ")
   (let [inp (read-line)]
-    (if (some #(= (str %) inp) (flatten board))
+    (if (and (utils/empty-place? inp) (some #(= % inp) (flatten board)))
       inp
       (do (println "Invalid input. Try again") (get-inp board)))))
 
@@ -26,25 +24,19 @@
   [board]
   (doseq [row board] (println (apply str (interpose " | " row)))))
 
-(defn switch-player [p] (if (= p \X) \O \X))
-
-(defn update-board
-  [board pos value]
-  (let [pos-n (Integer/parseInt pos)
-        row (quot (dec pos-n) 3)
-        col (rem (dec pos-n) 3)]
-    (assoc-in board [row col] value)))
-
 (defn play
-  [board player]
+  [board player play-bot]
   (println)
   (print-board board)
-  (let [inp (get-inp board)
-        new-board (update-board board inp player)]
+  (let [new-board (if (and (true? play-bot) (= player "O"))
+                    (assoc-in board (minimax/best-move board 0 player) player)
+                    (let [inp (get-inp board)]
+                      (utils/update-board board #(= % inp) player)))]
     (cond (game-winner new-board player) (do (print-board new-board)
                                              (println
                                                (str "Player " player " wins!")))
-          (empty-place-exists new-board) (play new-board (switch-player player))
+          (utils/empty-place-exists new-board)
+            (play new-board (utils/switch-player player) play-bot)
           :else (do (print-board new-board) (println "It's a draw!")))))
 
-(play [[\1 \2 \3] [\4 \5 \6] [\7 \8 \9]] \X)
+(play [["1" "2" "3"] ["4" "5" "6"] ["7" "8" "9"]] "X" true)

@@ -1,0 +1,6 @@
+tmp/
+.clj-kondo/
+.cpcache/
+.lein-repl-history
+.lsp/
+target/
